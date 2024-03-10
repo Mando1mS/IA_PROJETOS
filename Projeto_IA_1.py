@@ -96,6 +96,7 @@ def search_options(fileop):
         print("|          of scanned books              |\n")
         print("|________________________________________|\n")
         print("|                                        |\n")
+        print("|             [B] - Go back              |\n")
         print("|               [E] - Exit               |\n")
         print("|                                        |\n")
         print("------------------------------------------\n")
