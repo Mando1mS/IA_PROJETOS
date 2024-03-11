@@ -47,6 +47,25 @@ def verify_exit():
             break
         else:
             print("\nInvalid Input, please try again")
+            
+def melhor_lib_dr(scores,lib,dias_restantes):
+    max=0
+    for lb in lib:
+        currindex=0
+        acc=0
+        for i in range(dias_restantes):
+            for j in range(lb.livros_dia):
+                if(currindex <= lb.n_livros):
+                    acc=acc+scores[lb.livros[currindex]]
+                    currindex=+1
+        if(acc>max):
+            max=acc
+    return max
+                
+                
+                
+                
+            
 
 def main(fileop, op):
     # Nome do ficheiro
@@ -57,15 +76,16 @@ def main(fileop, op):
     # Numero total de livros | Numero total de livrarias | Limite de dias
     nlivros, nlib, deadline = map(int, file.readline().split())
     # Array com todas as pontuações dos livros, o livro numero 3 tem pontuação de socre[2]
-    scores = map(int, file.readline().split())
+    scores =list(map(int, file.readline().split()))
 
     # Lista com todas as livrarias, organizadas pela class criada acima
     lib = list()
     for i in range(nlib):
-        nl, ts, ld = map(int, file.readline().split())
-        idlivros = map(int, file.readline().split())
+        nl, ts, ld = list(map(int, file.readline().split()))
+        idlivros =list( map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
-
+    res=melhor_lib_dr(scores, lib, deadline)
+    print("Max: "+ str(res) + "\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
