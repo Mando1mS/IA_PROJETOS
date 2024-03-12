@@ -61,7 +61,7 @@ def melhor_lib_dr(scores,lib,dias_restantes):
                 for j in range(lb.livros_dia):
                     if(currindex <= lb.n_livros-1):
                         acc=acc+scores[lb.livros[currindex]]
-                        currindex=+1
+                        currindex=currindex+1
                     else:
                         break
             if(acc>maxi):
