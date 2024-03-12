@@ -70,10 +70,24 @@ def melhor_lib_dr(scores,lib,dias_restantes):
     res = [maxi,reslib]
     return res
                 
-                
-                
-                
+
+def reset_score(lib,scores,dias_restantes):
+    tmp = dias_restantes - lib.tempo_signup
+    currindex=0
+    for i in range(tmp):
+        if(currindex>lib.n_livros-1):
+            break
+        for j in range(lib.livros_dia):
+            if(currindex <= lib.n_livros-1):
+                scores[lib.livros[currindex]]=0
+                currindex=currindex+1
+            else:
+                break
             
+        
+        
+    
+    
 
 def main(fileop, op):
     # Nome do ficheiro
@@ -93,7 +107,9 @@ def main(fileop, op):
         idlivros =list( map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
     res=melhor_lib_dr(scores, lib, deadline)
-    print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+"\n")
+    #Mete o valor dos livros ja usados a 0
+    reset_score(res[1],scores,deadline)
+    print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
