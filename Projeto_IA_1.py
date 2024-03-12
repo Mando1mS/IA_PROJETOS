@@ -49,18 +49,26 @@ def verify_exit():
             print("\nInvalid Input, please try again")
             
 def melhor_lib_dr(scores,lib,dias_restantes):
-    max=0
+    maxi=0
     for lb in lib:
         currindex=0
         acc=0
-        for i in range(dias_restantes):
-            for j in range(lb.livros_dia):
-                if(currindex <= lb.n_livros):
-                    acc=acc+scores[lb.livros[currindex]]
-                    currindex=+1
-        if(acc>max):
-            max=acc
-    return max
+        temp = dias_restantes - lb.tempo_signup
+        if(temp>=0):
+            for i in range(temp):
+                if(currindex >lb.n_livros-1):
+                    break
+                for j in range(lb.livros_dia):
+                    if(currindex <= lb.n_livros-1):
+                        acc=acc+scores[lb.livros[currindex]]
+                        currindex=+1
+                    else:
+                        break
+            if(acc>maxi):
+                maxi=acc
+                reslib=lb
+    res = [maxi,reslib]
+    return res
                 
                 
                 
@@ -85,7 +93,7 @@ def main(fileop, op):
         idlivros =list( map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
     res=melhor_lib_dr(scores, lib, deadline)
-    print("Max: "+ str(res) + "\n")
+    print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+"\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
