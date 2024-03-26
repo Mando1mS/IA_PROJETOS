@@ -210,8 +210,16 @@ def calc_time(libs):
         tempo += lib.tempo_signup
     return tempo
 
-def Sim_annealing(lib,scores,deadline,Tmax,Tmin):
-    return 0
+def Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin):
+    res=select_random_config(lib, deadline, nlib)
+    total_usados = 0
+    for i in range(len(res)):
+        total_usados = total_usados + res[i].tempo_signup
+        print("lib: " + str(res[i].n_livros) + " Tempo para dar signup " + str(res[i].tempo_signup) + "\n")
+    print("Deadline: " + str(deadline)+ "\n")
+    print("usados: " + str(total_usados)+ "\n")
+    cost=evaluate_solution(res, scores, deadline)
+    return cost
 
 def select_random_config(lib,deadline,nlib):
     currday=0
@@ -245,8 +253,7 @@ def main(fileop, op,iterations,tabuSize):
         idlivros =list( map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
 
-    res=melhor_lib_dr(scores, lib, deadline)
-    
+    #res=melhor_lib_dr(scores, lib, deadline)
     #Mete o valor dos livros ja usados a 0
     #reset_score(res[1],scores,deadline)
     #print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
@@ -256,14 +263,10 @@ def main(fileop, op,iterations,tabuSize):
     elif op == 2:
         Tmax=nlib*2
         Tmin=0
-        res=select_random_config(lib, deadline, nlib)
-        total_usados = 0
-        for i in range(len(res)):
-            total_usados = total_usados + res[i].tempo_signup
-            print("lib: " + str(res[i].n_livros) + " Tempo para dar signup " + str(res[i].tempo_signup) + "\n")
-        print("Deadline: " + str(deadline)+ "\n")
-        print("usados: " + str(total_usados)+ "\n")
-        #res=Sim_annealing(lib,scores,deadline,Tmax,Tmin)
+        res = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
+        print("Custo final: " + str(res) + " \n")
+        
+        
     elif op == 3:
         print(deadline)
     elif op == 4:
