@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import random as rnd
 from sys import exit
 
 class Library():
@@ -83,8 +84,22 @@ def reset_score(lib,scores,dias_restantes):
                 currindex=currindex+1
             else:
                 break
-            
+def select_random_config(lib,deadline,nlib):
+    currday=0
+    deck = list(range(0, nlib))
+    rnd.shuffle(deck)
+    res=list()
+    for i in range(nlib):
+        num = deck.pop()
+        if(currday + lib[num].tempo_signup < deadline):
+            currday=currday+lib[num].tempo_signup
+            res.append(lib[num])
+    return res
         
+    
+def Sim_annealing(lib,scores,deadline,Tmax,Tmin):
+    return 0
+            
         
     
     
@@ -104,12 +119,25 @@ def main(fileop, op):
     lib = list()
     for i in range(nlib):
         nl, ts, ld = list(map(int, file.readline().split()))
-        idlivros =list( map(int, file.readline().split()))
+        idlivros =list(map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
-    res=melhor_lib_dr(scores, lib, deadline)
+    # Simulated Annealing
+    if op == 4:
+        Tmax=nlib*2
+        Tmin=0
+        res=select_random_config(lib, deadline, nlib)
+        total_usados = 0
+        for i in range(len(res)):
+            total_usados = total_usados + res[i].tempo_signup
+            print("lib: " + str(res[i].n_livros) + " Tempo para dar signup " + str(res[i].tempo_signup) + "\n")
+        print("Deadline: " + str(deadline)+ "\n")
+        print("usados: " + str(total_usados)+ "\n")
+        #res=Sim_annealing(lib,scores,deadline,Tmax,Tmin)
+        
+    #res=melhor_lib_dr(scores, lib, deadline)
     #Mete o valor dos livros ja usados a 0
-    reset_score(res[1],scores,deadline)
-    print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
+    #reset_score(res[1],scores,deadline)
+    #print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
@@ -136,8 +164,8 @@ def search_options(fileop):
         print("|       1- Number of dierent books       |\n")
         print("|       2- Number of libraries           |\n")
         print("|       3- Limit number of days          |\n")
-        print("|       4- Maximized total score         |\n")
-        print("|          of scanned books              |\n")
+        print("|       4- Simu Annealing                |\n")
+        print("|                                        |\n")
         print("|________________________________________|\n")
         print("|                                        |\n")
         print("|             [B] - Go back              |\n")
