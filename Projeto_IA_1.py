@@ -210,6 +210,21 @@ def calc_time(libs):
         tempo += lib.tempo_signup
     return tempo
 
+def Sim_annealing(lib,scores,deadline,Tmax,Tmin):
+    return 0
+
+def select_random_config(lib,deadline,nlib):
+    currday=0
+    deck = list(range(0, nlib))
+    random.shuffle(deck)
+    res=list()
+    for i in range(nlib):
+        num = deck.pop()
+        if(currday + lib[num].tempo_signup < deadline):
+            currday=currday+lib[num].tempo_signup
+            res.append(lib[num])
+    return res
+        
 
 
 def main(fileop, op,iterations,tabuSize):
@@ -234,12 +249,21 @@ def main(fileop, op,iterations,tabuSize):
     
     #Mete o valor dos livros ja usados a 0
     #reset_score(res[1],scores,deadline)
-    print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
+    #print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
     elif op == 2:
-        print(nlib)
+        Tmax=nlib*2
+        Tmin=0
+        res=select_random_config(lib, deadline, nlib)
+        total_usados = 0
+        for i in range(len(res)):
+            total_usados = total_usados + res[i].tempo_signup
+            print("lib: " + str(res[i].n_livros) + " Tempo para dar signup " + str(res[i].tempo_signup) + "\n")
+        print("Deadline: " + str(deadline)+ "\n")
+        print("usados: " + str(total_usados)+ "\n")
+        #res=Sim_annealing(lib,scores,deadline,Tmax,Tmin)
     elif op == 3:
         print(deadline)
     elif op == 4:
@@ -308,6 +332,9 @@ def total_score_menu(fileop):
         if op.isdigit() and 1 == int(op):
             tabu_search_menu(fileop)
             break
+        if op.isdigit() and 2 == int(op):
+            main(int(fileop),int(op),0,0)
+            break
         elif op.lower() == 'e':
             verify_exit()
         elif op.lower() == 'b':
@@ -365,7 +392,7 @@ def menu():
         fileop = input("Opção: ")
         
         if fileop.isdigit() and 1 <= int(fileop) <= 6:
-            search_options(int(fileop))
+            total_score_menu(int(fileop))
             break
         elif fileop.lower() == 'e':
             verify_exit()
