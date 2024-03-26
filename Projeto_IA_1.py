@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from sys import exit
-
+import random
 class Library():
     def __init__(self,n_livros,tempo_signup,livros_dia,livros):
         # Numero de livros na livraria
@@ -13,6 +13,10 @@ class Library():
         # Array com todos os IDs dos livros
         self.livros = livros
         
+    def __str__(self):
+            return (self.n_livros + self.tempo_signup + self.livros_dia +  self.livros)
+
+            
         
 def ler_opcao(op):
     if op == 1:
@@ -85,11 +89,130 @@ def reset_score(lib,scores,dias_restantes):
                 break
             
         
-        
+def tabu_search(libs, scores, dias_total, tabu_size=10, iterations=100):
+    current_solution = initial_solution(libs, scores)
+    best_solution = current_solution
+    tabu_list = []
+    solution_score = evaluate_solution(current_solution, scores, dias_total)
+    print("temp: ",solution_score)
+    for i in range(iterations):
+        neighbors = []
+        for i in range(10):
+            neighbors.append(generate_neighbors(libs, scores))
+        neighbors = [n for n in neighbors if n not in tabu_list]
+
+        if not neighbors:
+            break  # No new neighbors to explore
+
+        current_solution = max(neighbors, key=lambda x: evaluate_solution(x, scores, dias_total))
+        temp = evaluate_solution(current_solution, scores, dias_total)
+        if temp > evaluate_solution(best_solution, scores, dias_total):
+            best_solution = current_solution
+            solution_score = temp
+        print("temp: ",temp)
+        tabu_list.append(current_solution)
+        if len(tabu_list) > tabu_size:
+            tabu_list.pop(0)
+
+    return (best_solution,solution_score)
+
+def initial_solution(libs,book_scores):
+
+    lib_scores = [(lib, library_score(lib,book_scores,libs,[1,1,1])) for lib in libs]
     
+    sorted_libs = sorted(lib_scores, key=lambda x: x[1], reverse=True)
+    
+    sorted_libs = [lib for lib, _ in sorted_libs]
+    
+    return sorted_libs
+
+def generate_neighbors(libs, book_scores):
+    random_numbers = [random.randint(0, 2) for _ in range(3)]
+    
+    lib_scores = [(lib, library_score(lib,book_scores,libs,random_numbers)) for lib in libs]
+    
+    sorted_libs = sorted(lib_scores, key=lambda x: x[1], reverse=True)
+    
+    sorted_libs = [lib for lib, _ in sorted_libs]
+    
+    return sorted_libs
     
 
-def main(fileop, op):
+def library_score(library,book_scores,libs,weights):
+
+    
+    max_throughput = max(library.livros_dia for library in libs)
+    max_signup_time = max(library.tempo_signup for library in libs)
+
+    unique_books_score = sum(book_scores[book_id-1] for book_id in set(library.livros))
+    
+    # Normalize the library's throughput (you might need to adjust the normalization based on your dataset)
+    normalized_throughput = library.livros_dia / max_throughput
+    
+    # Normalize the library's signup time (you might need to adjust the normalization based on your dataset)
+    normalized_signup_time = 1 - (library.tempo_signup / max_signup_time)
+    
+    # Adjust these weights based on their importance to your strategy
+    weight_signup_time = weights[0]
+    weight_throughput = weights[1]
+    weight_books_score = weights[2]
+    
+    # Composite score calculation
+    library_priority_score = (weight_signup_time * normalized_signup_time +
+                            weight_throughput * normalized_throughput +
+                            weight_books_score * unique_books_score)
+    
+    return library_priority_score
+
+def evaluate_solution(libs, scores, dias_total):
+
+    books_read = []
+    current_score = 0
+    signed_up_libs = []
+    print("---------")
+    for lib in libs:
+        time_spent = calc_time(signed_up_libs)
+        signed_up_libs.append(lib)
+
+        print("tempo: ",(lib.tempo_signup + time_spent))
+        if(dias_total >= (lib.tempo_signup + time_spent)):
+            ordered_books = order_books(lib,scores)
+            dias_ativos = dias_total - (lib.tempo_signup + time_spent)
+            total_livros = dias_ativos * lib.livros_dia
+            if (total_livros-1)>lib.n_livros:
+                total_livros = lib.n_livros
+            else:
+                total_livros = total_livros-1
+            for i in range(total_livros):
+                
+                #print(ordered_books[i])
+                #print(scores[ordered_books[i]-1])
+                #print("---------")
+                #print(len(scores))
+                #print(total_livros)
+                book = ordered_books[i]
+                if(book not in books_read):
+                    current_score += scores[book]
+                    books_read.append(book)
+                else:
+                    continue
+    return current_score
+                    
+
+
+def order_books(lib,scores):
+    ordered_books = sorted(lib.livros, key=lambda book_id: scores[book_id], reverse=True)
+    return ordered_books
+
+def calc_time(libs):
+    tempo = 0
+    for lib in libs:
+        tempo += lib.tempo_signup
+    return tempo
+
+
+
+def main(fileop, op,iterations,tabuSize):
     # Nome do ficheiro
     filename = ler_opcao(fileop)
     # Abertura do ficheiro
@@ -97,18 +220,20 @@ def main(fileop, op):
 
     # Numero total de livros | Numero total de livrarias | Limite de dias
     nlivros, nlib, deadline = map(int, file.readline().split())
-    # Array com todas as pontuações dos livros, o livro numero 3 tem pontuação de socre[2]
+    # Array com todas as pontuações dos livros, o livro numero 3 tem pontuação de score[2]
     scores =list(map(int, file.readline().split()))
-
+   
     # Lista com todas as livrarias, organizadas pela class criada acima
     lib = list()
     for i in range(nlib):
         nl, ts, ld = list(map(int, file.readline().split()))
         idlivros =list( map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
+
     res=melhor_lib_dr(scores, lib, deadline)
+    
     #Mete o valor dos livros ja usados a 0
-    reset_score(res[1],scores,deadline)
+    #reset_score(res[1],scores,deadline)
     print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
@@ -117,9 +242,8 @@ def main(fileop, op):
         print(nlib)
     elif op == 3:
         print(deadline)
-    else:
-        print(lib[0].n_livros) # Solução errada tendo em conta o que é pedido, mas falta ser implementada
-
+    elif op == 4:
+        print(tabu_search(lib,scores,deadline,tabuSize,iterations))
     # Fecha o ficheiro
     file.close()
     # Sai do programa (Por enquanto mete-se isto para nao voltar logo ao menu e ser mais facil ler o resultado)
@@ -148,7 +272,7 @@ def search_options(fileop):
         op = input("Opção: ")
         
         if op.isdigit() and 1 <= int(op) <= 4:
-            main(int(fileop), int(op))
+            total_score_menu(fileop)
             break
         elif op.lower() == 'e':
             verify_exit()
@@ -157,6 +281,67 @@ def search_options(fileop):
             break
         else:
             print("Invalid option. Please choose a valid option (1-7).")
+
+
+def total_score_menu(fileop):
+    while True:
+        print("------------------------------------------\n")
+        print("|                                        |\n")
+        print("|        What method do you want         |\n")
+        print("|     to use to find the total score?    |\n")
+        print("|________________________________________|\n")
+        print("|                                        |\n")
+        print("|       1- Tabu Search                   |\n")
+        print("|       2- Simulated Annealing           |\n")
+        print("|       3- Hill Climbing                 |\n")
+        print("|       4- Genetic Algorithm             |\n")
+        print("|       5- Other                         |\n")
+        print("|________________________________________|\n")
+        print("|                                        |\n")
+        print("|             [B] - Go back              |\n")
+        print("|               [E] - Exit               |\n")
+        print("|                                        |\n")
+        print("------------------------------------------\n")
+        
+        op = input("Opção: ")
+        
+        if op.isdigit() and 1 == int(op):
+            tabu_search_menu(fileop)
+            break
+        elif op.lower() == 'e':
+            verify_exit()
+        elif op.lower() == 'b':
+            search_options()
+            break
+        else:
+            print("Invalid option. Please choose a valid option (1-7).")
+
+
+
+def tabu_search_menu(fileop):
+    while True:
+        print("------------------------------------------\n")
+        print("|                                        |\n")
+        print("|     Insert the number of iterations    |\n")
+        print("|          for the tabu search.          |\n")
+        print("|________________________________________|\n")
+
+        op = input("Número de Iterações: ")
+
+        print("------------------------------------------\n")
+        print("|                                        |\n")
+        print("|        Now insert the tabu size.       |\n")
+        print("|________________________________________|\n")
+        
+        op2 = input("Tabu Size: ")
+
+        if op.isdigit() :
+            main(int(fileop), 4,int(op),int(op2))
+            break
+        else:
+            print("Invalid option. Please choose a valid option.")
+        
+
 
 def menu():
     while True:
