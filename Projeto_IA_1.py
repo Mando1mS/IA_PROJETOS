@@ -94,7 +94,6 @@ def tabu_search(libs, scores, dias_total, tabu_size=10, iterations=100):
     best_solution = current_solution
     tabu_list = []
     solution_score = evaluate_solution(current_solution, scores, dias_total)
-    print("temp: ",solution_score)
     for i in range(iterations):
         neighbors = []
         for i in range(10):
@@ -102,14 +101,15 @@ def tabu_search(libs, scores, dias_total, tabu_size=10, iterations=100):
         neighbors = [n for n in neighbors if n not in tabu_list]
 
         if not neighbors:
-            break  # No new neighbors to explore
+            break  
 
         current_solution = max(neighbors, key=lambda x: evaluate_solution(x, scores, dias_total))
+     
         temp = evaluate_solution(current_solution, scores, dias_total)
+        print("Score Attempt: " + str(temp))
         if temp > evaluate_solution(best_solution, scores, dias_total):
             best_solution = current_solution
             solution_score = temp
-        print("temp: ",temp)
         tabu_list.append(current_solution)
         if len(tabu_list) > tabu_size:
             tabu_list.pop(0)
@@ -146,18 +146,13 @@ def library_score(library,book_scores,libs,weights):
 
     unique_books_score = sum(book_scores[book_id-1] for book_id in set(library.livros))
     
-    # Normalize the library's throughput (you might need to adjust the normalization based on your dataset)
     normalized_throughput = library.livros_dia / max_throughput
     
-    # Normalize the library's signup time (you might need to adjust the normalization based on your dataset)
     normalized_signup_time = 1 - (library.tempo_signup / max_signup_time)
-    
-    # Adjust these weights based on their importance to your strategy
     weight_signup_time = weights[0]
     weight_throughput = weights[1]
     weight_books_score = weights[2]
     
-    # Composite score calculation
     library_priority_score = (weight_signup_time * normalized_signup_time +
                             weight_throughput * normalized_throughput +
                             weight_books_score * unique_books_score)
@@ -169,12 +164,10 @@ def evaluate_solution(libs, scores, dias_total):
     books_read = []
     current_score = 0
     signed_up_libs = []
-    print("---------")
     for lib in libs:
         time_spent = calc_time(signed_up_libs)
         signed_up_libs.append(lib)
 
-        print("tempo: ",(lib.tempo_signup + time_spent))
         if(dias_total >= (lib.tempo_signup + time_spent)):
             ordered_books = order_books(lib,scores)
             dias_ativos = dias_total - (lib.tempo_signup + time_spent)
@@ -184,12 +177,6 @@ def evaluate_solution(libs, scores, dias_total):
             else:
                 total_livros = total_livros-1
             for i in range(total_livros):
-                
-                #print(ordered_books[i])
-                #print(scores[ordered_books[i]-1])
-                #print("---------")
-                #print(len(scores))
-                #print(total_livros)
                 book = ordered_books[i]
                 if(book not in books_read):
                     current_score += scores[book]
@@ -243,7 +230,7 @@ def main(fileop, op,iterations,tabuSize):
     elif op == 3:
         print(deadline)
     elif op == 4:
-        print(tabu_search(lib,scores,deadline,tabuSize,iterations))
+        print("Final Score: " + str(tabu_search(lib,scores,deadline,tabuSize,iterations)[1]))
     # Fecha o ficheiro
     file.close()
     # Sai do programa (Por enquanto mete-se isto para nao voltar logo ao menu e ser mais facil ler o resultado)
