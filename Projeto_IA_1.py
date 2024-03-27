@@ -241,15 +241,38 @@ def select_random_config(lib,deadline,nlib):
         
 def get_neighbors_sa(todas_lib,lib_sol,deadline):
     if(0.5>random.random()):
+        print("Solucao len\n" + str(len(lib_sol))+"\n")
         nums = list(range(0,len(lib_sol)))
         random.shuffle(nums)
-        n1= nums.pop()
-        n2= nums.pop()
-        tmp= lib_sol[n2]
-        lib_sol[n2]=lib_sol[n1]
-        lib_sol[n1]=tmp
+        if nums:
+            n1= nums.pop()
+            n2= nums.pop()
+            tmp= lib_sol[n2]
+            lib_sol[n2]=lib_sol[n1]
+            lib_sol[n1]=tmp
     else:
         visited_lib = []
+        tam_original=len(lib_sol)
+        nums = list(range(0,len(lib_sol)))
+        random.shuffle(nums)
+        n = nums.pop()
+        rem=lib_sol[n]
+        lib_sol.remove(lib_sol[n])
+        tot=0
+        for lb in lib_sol:
+            tot=tot+lb.tempo_signup
+            visited_lib.append(lb)
+        tempolivre = deadline-tot-1
+        while(1):
+            if not nums:
+                break
+            else:
+                nr=nums.pop()
+                if((todas_lib[nr] not in visited_lib) and (todas_lib[nr].tempo_signup<=tempolivre)):
+                    lib_sol.append(todas_lib[nr])
+                    break
+        if(len(lib_sol)!=tam_original):
+            lib_sol.append(rem)
     return lib_sol
     
 
