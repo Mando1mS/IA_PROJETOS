@@ -248,13 +248,13 @@ def Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin):
         neighbor=get_neighbors_sa(lib,best_solution,deadline)
         new_cost=evaluate_solution(neighbor, scores, deadline)
         dif=new_cost - best_cost
-        if(dif >= 0):
+        if(dif > 0):
             best_cost = new_cost
             best_solution = neighbor
         elif(math.exp(dif/Tmax)>random.random()):
             best_cost = new_cost
             best_solution = neighbor
-        Tmax=Tmax-1
+        Tmax=Tmax-5
     return best_cost
 
 def select_random_config(lib,deadline,nlib):
@@ -270,7 +270,10 @@ def select_random_config(lib,deadline,nlib):
     return res
         
 def get_neighbors_sa(todas_lib,lib_sol,deadline):
-    if(0.5>random.random()):
+    rand=random.random()
+    if(0.2>rand):
+        random.shuffle(lib_sol)
+    elif(0.6>rand):
         #print("Solucao len\n" + str(len(lib_sol))+"\n")
         nums = list(range(0,len(lib_sol)))
         random.shuffle(nums)
@@ -333,7 +336,7 @@ def main(fileop, op,iterations,tabuSize):
     if op == 1:
         print(nlivros)
     elif op == 2:
-        Tmax=nlib*4
+        Tmax=nlib*10
         Tmin=0
         res = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
         print("Custo final: " + str(res) + " \n")
