@@ -164,7 +164,7 @@ def library_score(library,book_scores,libs,weights):
                             weight_books_score * unique_books_score)
     
     return library_priority_score
-
+'''
 def evaluate_solution(libs, scores, dias_total):
 
     books_read = []
@@ -197,6 +197,36 @@ def evaluate_solution(libs, scores, dias_total):
                     books_read.append(book)
                 else:
                     continue
+    return current_score
+'''
+
+def evaluate_solution(libs, scores, dias_total):
+    books_read = set()
+    current_score = 0
+    signed_up_libs = []
+    
+    ordered_books_all = {}  # Store ordered books for all libraries
+    
+    for lib in libs:
+        time_spent = calc_time(signed_up_libs)
+        signed_up_libs.append(lib)
+        
+        if dias_total < (lib.tempo_signup + time_spent):
+            break  # No time left to sign up more libraries
+        
+        if lib not in ordered_books_all:
+            ordered_books_all[lib] = order_books(lib, scores)
+        
+        ordered_books = ordered_books_all[lib]
+        
+        dias_ativos = dias_total - (lib.tempo_signup + time_spent)
+        total_livros = min(dias_ativos * lib.livros_dia, lib.n_livros - 1)
+        
+        for book in ordered_books[:total_livros]:
+            if book not in books_read:
+                current_score += scores[book]
+                books_read.add(book)
+                
     return current_score
                     
 
@@ -241,7 +271,7 @@ def select_random_config(lib,deadline,nlib):
         
 def get_neighbors_sa(todas_lib,lib_sol,deadline):
     if(0.5>random.random()):
-        print("Solucao len\n" + str(len(lib_sol))+"\n")
+        #print("Solucao len\n" + str(len(lib_sol))+"\n")
         nums = list(range(0,len(lib_sol)))
         random.shuffle(nums)
         if nums:
@@ -303,7 +333,7 @@ def main(fileop, op,iterations,tabuSize):
     if op == 1:
         print(nlivros)
     elif op == 2:
-        Tmax=nlib*2
+        Tmax=nlib*4
         Tmin=0
         res = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
         print("Custo final: " + str(res) + " \n")
