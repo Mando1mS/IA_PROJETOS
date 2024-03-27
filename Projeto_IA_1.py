@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import os
 from sys import exit
 import random
@@ -158,7 +159,7 @@ def library_score(library,book_scores,libs,weights):
                             weight_books_score * unique_books_score)
     
     return library_priority_score
-
+'''
 def evaluate_solution(libs, scores, dias_total):
 
     books_read = []
@@ -184,6 +185,36 @@ def evaluate_solution(libs, scores, dias_total):
                 else:
                     continue
     return current_score
+'''
+
+def evaluate_solution(libs, scores, dias_total):
+    books_read = set()
+    current_score = 0
+    signed_up_libs = []
+    
+    ordered_books_all = {}  # Store ordered books for all libraries
+    
+    for lib in libs:
+        time_spent = calc_time(signed_up_libs)
+        signed_up_libs.append(lib)
+        
+        if dias_total < (lib.tempo_signup + time_spent):
+            break  # No time left to sign up more libraries
+        
+        if lib not in ordered_books_all:
+            ordered_books_all[lib] = order_books(lib, scores)
+        
+        ordered_books = ordered_books_all[lib]
+        
+        dias_ativos = dias_total - (lib.tempo_signup + time_spent)
+        total_livros = min(dias_ativos * lib.livros_dia, lib.n_livros - 1)
+        
+        for book in ordered_books[:total_livros]:
+            if book not in books_read:
+                current_score += scores[book]
+                books_read.add(book)
+                
+    return current_score
                     
 
 
@@ -197,6 +228,73 @@ def calc_time(libs):
         tempo += lib.tempo_signup
     return tempo
 
+def Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin):
+    best_solution=select_random_config(lib, deadline, nlib)
+    best_cost=evaluate_solution(best_solution, scores, deadline)
+    while(Tmax > Tmin):
+        neighbor=get_neighbors_sa(lib,best_solution,deadline)
+        new_cost=evaluate_solution(neighbor, scores, deadline)
+        dif=new_cost - best_cost
+        if(dif > 0):
+            best_cost = new_cost
+            best_solution = neighbor
+        elif(math.exp(dif/Tmax)>random.random()):
+            best_cost = new_cost
+            best_solution = neighbor
+        Tmax=Tmax-5
+    return best_cost
+
+def select_random_config(lib,deadline,nlib):
+    currday=0
+    deck = list(range(0, nlib))
+    random.shuffle(deck)
+    res=list()
+    for i in range(nlib):
+        num = deck.pop()
+        if(currday + lib[num].tempo_signup < deadline):
+            currday=currday+lib[num].tempo_signup
+            res.append(lib[num])
+    return res
+        
+def get_neighbors_sa(todas_lib,lib_sol,deadline):
+    rand=random.random()
+    if(0.2>rand):
+        random.shuffle(lib_sol)
+    elif(0.6>rand):
+        #print("Solucao len\n" + str(len(lib_sol))+"\n")
+        nums = list(range(0,len(lib_sol)))
+        random.shuffle(nums)
+        if nums:
+            n1= nums.pop()
+            n2= nums.pop()
+            tmp= lib_sol[n2]
+            lib_sol[n2]=lib_sol[n1]
+            lib_sol[n1]=tmp
+    else:
+        visited_lib = []
+        tam_original=len(lib_sol)
+        nums = list(range(0,len(lib_sol)))
+        random.shuffle(nums)
+        n = nums.pop()
+        rem=lib_sol[n]
+        lib_sol.remove(lib_sol[n])
+        tot=0
+        for lb in lib_sol:
+            tot=tot+lb.tempo_signup
+            visited_lib.append(lb)
+        tempolivre = deadline-tot-1
+        while(1):
+            if not nums:
+                break
+            else:
+                nr=nums.pop()
+                if((todas_lib[nr] not in visited_lib) and (todas_lib[nr].tempo_signup<=tempolivre)):
+                    lib_sol.append(todas_lib[nr])
+                    break
+        if(len(lib_sol)!=tam_original):
+            lib_sol.append(rem)
+    return lib_sol
+    
 
 
 def main(fileop, op,iterations,tabuSize):
@@ -217,16 +315,20 @@ def main(fileop, op,iterations,tabuSize):
         idlivros =list( map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
 
-    res=melhor_lib_dr(scores, lib, deadline)
-    
+    #res=melhor_lib_dr(scores, lib, deadline)
     #Mete o valor dos livros ja usados a 0
     #reset_score(res[1],scores,deadline)
-    print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
+    #print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
     elif op == 2:
-        print(nlib)
+        Tmax=nlib*10
+        Tmin=0
+        res = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
+        print("Custo final: " + str(res) + " \n")
+        
+        
     elif op == 3:
         print(deadline)
     elif op == 4:
@@ -295,6 +397,9 @@ def total_score_menu(fileop):
         if op.isdigit() and 1 == int(op):
             tabu_search_menu(fileop)
             break
+        if op.isdigit() and 2 == int(op):
+            main(int(fileop),int(op),0,0)
+            break
         elif op.lower() == 'e':
             verify_exit()
         elif op.lower() == 'b':
@@ -352,7 +457,7 @@ def menu():
         fileop = input("Opção: ")
         
         if fileop.isdigit() and 1 <= int(fileop) <= 6:
-            search_options(int(fileop))
+            total_score_menu(int(fileop))
             break
         elif fileop.lower() == 'e':
             verify_exit()
