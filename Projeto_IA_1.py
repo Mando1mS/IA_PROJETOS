@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import os
 from sys import exit
 import random
@@ -211,15 +212,20 @@ def calc_time(libs):
     return tempo
 
 def Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin):
-    res=select_random_config(lib, deadline, nlib)
-    total_usados = 0
-    for i in range(len(res)):
-        total_usados = total_usados + res[i].tempo_signup
-        print("lib: " + str(res[i].n_livros) + " Tempo para dar signup " + str(res[i].tempo_signup) + "\n")
-    print("Deadline: " + str(deadline)+ "\n")
-    print("usados: " + str(total_usados)+ "\n")
-    cost=evaluate_solution(res, scores, deadline)
-    return cost
+    best_solution=select_random_config(lib, deadline, nlib)
+    best_cost=evaluate_solution(best_solution, scores, deadline)
+    while(Tmax > Tmin):
+        neighbor=get_neighbors_sa(lib,best_solution,deadline)
+        new_cost=evaluate_solution(neighbor, scores, deadline)
+        dif=new_cost - best_cost
+        if(dif >= 0):
+            best_cost = new_cost
+            best_solution = neighbor
+        elif(math.exp(dif/Tmax)>random.random()):
+            best_cost = new_cost
+            best_solution = neighbor
+        Tmax=Tmax-1
+    return best_cost
 
 def select_random_config(lib,deadline,nlib):
     currday=0
@@ -233,6 +239,19 @@ def select_random_config(lib,deadline,nlib):
             res.append(lib[num])
     return res
         
+def get_neighbors_sa(todas_lib,lib_sol,deadline):
+    if(0.5>random.random()):
+        nums = list(range(0,len(lib_sol)))
+        random.shuffle(nums)
+        n1= nums.pop()
+        n2= nums.pop()
+        tmp= lib_sol[n2]
+        lib_sol[n2]=lib_sol[n1]
+        lib_sol[n1]=tmp
+    else:
+        visited_lib = []
+    return lib_sol
+    
 
 
 def main(fileop, op,iterations,tabuSize):
