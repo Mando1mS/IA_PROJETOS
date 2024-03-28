@@ -297,28 +297,40 @@ def get_neighbors_sa(todas_lib,lib_sol,deadline):
             lib_sol.append(rem)
     return lib_sol
     
-def iterated_local_search(libs, scores, dias_total, max_iterations=50):
+def iterated_local_search(libs, scores, dias_total, max_iterations=50,perturbation_levels=3):
     current_solution = initial_solution(libs, scores)
     best_solution = current_solution
     best_score = evaluate_solution(current_solution, scores, dias_total)
     
     for i in range(max_iterations):
         current_solution, current_score = tabu_search(libs, scores, dias_total,5,30)
-        perturbed_solution = perturb_solution(current_solution)
-        perturbed_solution, perturbed_score = tabu_search(libs, scores, dias_total,5,30)
-        if perturbed_score > best_score:
-            best_solution = perturbed_solution
-            best_score = perturbed_score
-        
+        for level in range(1, perturbation_levels + 1):
+            perturbed_solution = perturb_solution(current_solution, level)
+            perturbed_solution, perturbed_score = tabu_search(libs, scores, dias_total, 5, 30)
+            
+            if perturbed_score > best_score:
+                best_solution = perturbed_solution
+                best_score = perturbed_score
     return best_solution, best_score
 
-def perturb_solution(solution):
+def perturb_solution(solution,level):
     # Randomly perturb the solution (e.g., swap two libraries)
-    perturbed_solution = solution[:]
+    perturbed_solution = solution.copy()
     num_libs = len(solution)
     if num_libs >= 2:
-        id1, id2 = random.sample(range(num_libs), 2)
-        perturbed_solution[id1], perturbed_solution[id2] = perturbed_solution[id2], perturbed_solution[id1]
+        if level == 1:
+            id1, id2 = random.sample(range(num_libs), 2)
+            perturbed_solution[id1], perturbed_solution[id2] = perturbed_solution[id2], perturbed_solution[id1]
+        elif level == 2:
+            subset_size = num_libs//3
+            indices_to_swap = random.sample(range(num_libs), subset_size)
+            if len(indices_to_swap) % 2 == 0:  # Ensure even number of indices
+                for i in range(0, len(indices_to_swap), 2):
+                    id1, id2 = indices_to_swap[i], indices_to_swap[i + 1]
+                    perturbed_solution[id1], perturbed_solution[id2] = perturbed_solution[id2], perturbed_solution[id1]
+        elif level == 3:
+            # Randomly shuffle the entire solution
+            random.shuffle(perturbed_solution)
     return perturbed_solution
 
 
