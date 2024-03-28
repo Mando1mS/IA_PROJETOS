@@ -3,9 +3,10 @@ import math
 import os
 from sys import exit
 import random
-import heapq
+
 class Library():
-    def __init__(self,n_livros,tempo_signup,livros_dia,livros):
+    def __init__(self,id_liv,n_livros,tempo_signup,livros_dia,livros):
+        self.id_liv = id_liv
         # Numero de livros na livraria
         self.n_livros = n_livros
         # Tempo que demora a registar
@@ -244,7 +245,7 @@ def Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin):
             best_cost = new_cost
             best_solution = neighbor
         Tmax=Tmax-5
-    return best_cost
+    return best_solution,best_cost
 
 def select_random_config(lib,deadline,nlib):
     currday=0
@@ -344,13 +345,13 @@ def main(fileop, op,iterations,tabuSize):
     nlivros, nlib, deadline = map(int, file.readline().split())
     # Array com todas as pontuações dos livros, o livro numero 3 tem pontuação de score[2]
     scores =list(map(int, file.readline().split()))
-   
+    
     # Lista com todas as livrarias, organizadas pela class criada acima
     lib = list()
     for i in range(nlib):
         nl, ts, ld = list(map(int, file.readline().split()))
         idlivros =list( map(int, file.readline().split()))
-        lib.append(Library(nl, ts, ld, idlivros))
+        lib.append(Library(i,nl, ts, ld, idlivros))
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
@@ -358,9 +359,16 @@ def main(fileop, op,iterations,tabuSize):
         Tmax=nlib*10
         Tmin=0
         res = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
-        print("Custo final: " + str(res) + " \n")
-        
-        
+        out=filename.replace(".txt", "_SA_out.txt")
+        with open(out, 'w') as fileout:
+            fileout.write(str(len(res[0])))
+            fileout.write("\n")
+            for lib in res[0]:
+                fileout.write(str(lib.id_liv))
+                fileout.write("\n")
+                
+                
+        print("Custo final: " + str(res[1]) + " \n")
     elif op == 3:
         print(deadline)
     elif op == 4:
