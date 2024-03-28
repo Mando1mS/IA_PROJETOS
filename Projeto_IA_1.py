@@ -3,6 +3,7 @@ import math
 import os
 from sys import exit
 import random
+import heapq
 class Library():
     def __init__(self,n_livros,tempo_signup,livros_dia,livros):
         # Numero de livros na livraria
@@ -116,6 +117,7 @@ def tabu_search(libs, scores, dias_total, tabu_size=10, iterations=100):
             tabu_list.pop(0)
 
     return (best_solution,solution_score)
+
 
 def initial_solution(libs,book_scores):
 
@@ -295,15 +297,15 @@ def get_neighbors_sa(todas_lib,lib_sol,deadline):
             lib_sol.append(rem)
     return lib_sol
     
-def iterated_local_search(libs, scores, dias_total, max_iterations=10):
+def iterated_local_search(libs, scores, dias_total, max_iterations=50):
     current_solution = initial_solution(libs, scores)
     best_solution = current_solution
     best_score = evaluate_solution(current_solution, scores, dias_total)
     
     for i in range(max_iterations):
-        current_solution, current_score = tabu_search(libs, scores, dias_total)
+        current_solution, current_score = tabu_search(libs, scores, dias_total,5,30)
         perturbed_solution = perturb_solution(current_solution)
-        perturbed_solution, perturbed_score = tabu_search(libs, scores, dias_total)
+        perturbed_solution, perturbed_score = tabu_search(libs, scores, dias_total,5,30)
         if perturbed_score > best_score:
             best_solution = perturbed_solution
             best_score = perturbed_score
@@ -315,8 +317,8 @@ def perturb_solution(solution):
     perturbed_solution = solution[:]
     num_libs = len(solution)
     if num_libs >= 2:
-        idx1, idx2 = random.sample(range(num_libs), 2)
-        perturbed_solution[idx1], perturbed_solution[idx2] = perturbed_solution[idx2], perturbed_solution[idx1]
+        id1, id2 = random.sample(range(num_libs), 2)
+        perturbed_solution[id1], perturbed_solution[id2] = perturbed_solution[id2], perturbed_solution[id1]
     return perturbed_solution
 
 
