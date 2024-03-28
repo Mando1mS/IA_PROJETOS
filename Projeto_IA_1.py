@@ -295,6 +295,29 @@ def get_neighbors_sa(todas_lib,lib_sol,deadline):
             lib_sol.append(rem)
     return lib_sol
     
+def iterated_local_search(libs, scores, dias_total, max_iterations=10):
+    current_solution = initial_solution(libs, scores)
+    best_solution = current_solution
+    best_score = evaluate_solution(current_solution, scores, dias_total)
+    
+    for i in range(max_iterations):
+        current_solution, current_score = tabu_search(libs, scores, dias_total)
+        perturbed_solution = perturb_solution(current_solution)
+        perturbed_solution, perturbed_score = tabu_search(libs, scores, dias_total)
+        if perturbed_score > best_score:
+            best_solution = perturbed_solution
+            best_score = perturbed_score
+        
+    return best_solution, best_score
+
+def perturb_solution(solution):
+    # Randomly perturb the solution (e.g., swap two libraries)
+    perturbed_solution = solution[:]
+    num_libs = len(solution)
+    if num_libs >= 2:
+        idx1, idx2 = random.sample(range(num_libs), 2)
+        perturbed_solution[idx1], perturbed_solution[idx2] = perturbed_solution[idx2], perturbed_solution[idx1]
+    return perturbed_solution
 
 
 def main(fileop, op,iterations,tabuSize):
@@ -314,11 +337,6 @@ def main(fileop, op,iterations,tabuSize):
         nl, ts, ld = list(map(int, file.readline().split()))
         idlivros =list( map(int, file.readline().split()))
         lib.append(Library(nl, ts, ld, idlivros))
-
-    #res=melhor_lib_dr(scores, lib, deadline)
-    #Mete o valor dos livros ja usados a 0
-    #reset_score(res[1],scores,deadline)
-    #print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
@@ -333,6 +351,9 @@ def main(fileop, op,iterations,tabuSize):
         print(deadline)
     elif op == 4:
         print("Final Score: " + str(tabu_search(lib,scores,deadline,tabuSize,iterations)[1]))
+    elif op == 5:
+        res = iterated_local_search(lib, scores, deadline)
+        print("Custo final: " + str(res[1]) + " \n")
     # Fecha o ficheiro
     file.close()
     # Sai do programa (Por enquanto mete-se isto para nao voltar logo ao menu e ser mais facil ler o resultado)
@@ -384,7 +405,7 @@ def total_score_menu(fileop):
         print("|       2- Simulated Annealing           |\n")
         print("|       3- Hill Climbing                 |\n")
         print("|       4- Genetic Algorithm             |\n")
-        print("|       5- Other                         |\n")
+        print("|       5- Iterated Local Search         |\n")
         print("|________________________________________|\n")
         print("|                                        |\n")
         print("|             [B] - Go back              |\n")
@@ -398,6 +419,9 @@ def total_score_menu(fileop):
             tabu_search_menu(fileop)
             break
         if op.isdigit() and 2 == int(op):
+            main(int(fileop),int(op),0,0)
+            break
+        if op.isdigit() and 5 == int(op):
             main(int(fileop),int(op),0,0)
             break
         elif op.lower() == 'e':
