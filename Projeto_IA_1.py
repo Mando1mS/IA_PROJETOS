@@ -39,6 +39,19 @@ def ler_opcao(op):
         return "err"
     return filename
 
+def nome_ficheiro_final(op):
+    if op==1:
+        nomefinal = "_HC_out.txt"
+    elif op==2:
+        nomefinal = "_SA_out.txt"
+    elif op==3:
+        nomefinal = "_GA_out.txt"
+    elif op==4:
+        nomefinal = "_TS_out.txt"
+    elif op==5:
+        nomefinal = "_ILS_out.txt"
+    return nomefinal
+
 def verify_exit():
     check = ''
 
@@ -117,7 +130,7 @@ def tabu_search(libs, scores, dias_total, tabu_size=10, iterations=100):
         if len(tabu_list) > tabu_size:
             tabu_list.pop(0)
 
-    return (best_solution,solution_score)
+    return best_solution,solution_score
 
 
 def initial_solution(libs,book_scores):
@@ -190,7 +203,7 @@ def evaluate_solution(libs, scores, dias_total):
     return current_score
 '''
 
-def evaluate_solution(libs, scores, dias_total):
+def evaluate_solution(libs, scores, dias_total,dict_sol={}):
     books_read = set()
     current_score = 0
     signed_up_libs = []
@@ -211,11 +224,13 @@ def evaluate_solution(libs, scores, dias_total):
         
         dias_ativos = dias_total - (lib.tempo_signup + time_spent)
         total_livros = min(dias_ativos * lib.livros_dia, lib.n_livros - 1)
-        
+        book_out = []
         for book in ordered_books[:total_livros]:
             if book not in books_read:
                 current_score += scores[book]
                 books_read.add(book)
+            book_out.append(book)
+        dict_sol.update({lib.id_liv : book_out})
                 
     return current_score
                     
@@ -244,7 +259,7 @@ def Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin):
         elif(math.exp(dif/Tmax)>random.random()):
             best_cost = new_cost
             best_solution = neighbor
-        Tmax=Tmax-5
+        Tmax=Tmax*0.98
     return best_solution,best_cost
 
 def select_random_config(lib,deadline,nlib):
@@ -315,7 +330,6 @@ def iterated_local_search(libs, scores, dias_total, max_iterations=50,perturbati
     return best_solution, best_score
 
 def perturb_solution(solution,level):
-    # Randomly perturb the solution (e.g., swap two libraries)
     perturbed_solution = solution.copy()
     num_libs = len(solution)
     if num_libs >= 2:
@@ -325,15 +339,34 @@ def perturb_solution(solution,level):
         elif level == 2:
             subset_size = num_libs//3
             indices_to_swap = random.sample(range(num_libs), subset_size)
-            if len(indices_to_swap) % 2 == 0:  # Ensure even number of indices
+            if len(indices_to_swap) % 2 == 0:  
                 for i in range(0, len(indices_to_swap), 2):
                     id1, id2 = indices_to_swap[i], indices_to_swap[i + 1]
                     perturbed_solution[id1], perturbed_solution[id2] = perturbed_solution[id2], perturbed_solution[id1]
         elif level == 3:
-            # Randomly shuffle the entire solution
             random.shuffle(perturbed_solution)
     return perturbed_solution
 
+
+def create_file(res,filename,scores,deadline,op):
+    dict_sol = {}
+    evaluate_solution(res[0],scores,deadline,dict_sol)
+    nm=nome_ficheiro_final(op)
+    out=filename.replace(".txt", nm)
+    with open(out, 'w') as fileout:
+        fileout.write(str(len(res[0])))
+        fileout.write("\n")
+        for lib in res[0]:
+            try:
+                fileout.write(str(lib.id_liv) + " " + str(len(dict_sol.get(lib.id_liv))) + "\n")
+            except TypeError:
+                fileout.write(str(lib.id_liv))
+            try:
+                for book in dict_sol.get(lib.id_liv):
+                    fileout.write(str(book) + " ")
+            except TypeError:
+                fileout.write(" Assigned after deadline is over ")
+            fileout.write("\n")
 
 def main(fileop, op,iterations,tabuSize):
     # Nome do ficheiro
@@ -357,24 +390,19 @@ def main(fileop, op,iterations,tabuSize):
         print(nlivros)
     elif op == 2:
         Tmax=nlib*10
-        Tmin=0
+        Tmin=1
         res = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
-        out=filename.replace(".txt", "_SA_out.txt")
-        with open(out, 'w') as fileout:
-            fileout.write(str(len(res[0])))
-            fileout.write("\n")
-            for lib in res[0]:
-                fileout.write(str(lib.id_liv))
-                fileout.write("\n")
-                
-                
+        create_file(res, filename, scores, deadline,op)
         print("Custo final: " + str(res[1]) + " \n")
     elif op == 3:
         print(deadline)
     elif op == 4:
-        print("Final Score: " + str(tabu_search(lib,scores,deadline,tabuSize,iterations)[1]))
+        res=tabu_search(lib,scores,deadline,tabuSize,iterations)
+        create_file(res, filename, scores, deadline,op)
+        print("Final Score: " + str(res[1]))
     elif op == 5:
         res = iterated_local_search(lib, scores, deadline)
+        create_file(res, filename, scores, deadline,op)
         print("Custo final: " + str(res[1]) + " \n")
     # Fecha o ficheiro
     file.close()
