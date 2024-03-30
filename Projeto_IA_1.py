@@ -3,8 +3,10 @@ import math
 import os
 from sys import exit
 import random
+
 class Library():
-    def __init__(self,n_livros,tempo_signup,livros_dia,livros):
+    def __init__(self,id_liv,n_livros,tempo_signup,livros_dia,livros):
+        self.id_liv = id_liv
         # Numero de livros na livraria
         self.n_livros = n_livros
         # Tempo que demora a registar
@@ -36,6 +38,19 @@ def ler_opcao(op):
         print("error reading option\n")
         return "err"
     return filename
+
+def nome_ficheiro_final(op):
+    if op==1:
+        nomefinal = "_HC_out.txt"
+    elif op==2:
+        nomefinal = "_SA_out.txt"
+    elif op==3:
+        nomefinal = "_GA_out.txt"
+    elif op==4:
+        nomefinal = "_TS_out.txt"
+    elif op==5:
+        nomefinal = "_ILS_out.txt"
+    return nomefinal
 
 def verify_exit():
     check = ''
@@ -115,7 +130,8 @@ def tabu_search(libs, scores, dias_total, tabu_size=10, iterations=100):
         if len(tabu_list) > tabu_size:
             tabu_list.pop(0)
 
-    return (best_solution,solution_score)
+    return best_solution,solution_score
+
 
 def initial_solution(libs,book_scores):
 
@@ -187,7 +203,7 @@ def evaluate_solution(libs, scores, dias_total):
     return current_score
 '''
 
-def evaluate_solution(libs, scores, dias_total):
+def evaluate_solution(libs, scores, dias_total,dict_sol={}):
     books_read = set()
     current_score = 0
     signed_up_libs = []
@@ -208,11 +224,13 @@ def evaluate_solution(libs, scores, dias_total):
         
         dias_ativos = dias_total - (lib.tempo_signup + time_spent)
         total_livros = min(dias_ativos * lib.livros_dia, lib.n_livros - 1)
-        
+        book_out = []
         for book in ordered_books[:total_livros]:
             if book not in books_read:
                 current_score += scores[book]
                 books_read.add(book)
+            book_out.append(book)
+        dict_sol.update({lib.id_liv : book_out})
                 
     return current_score
                     
@@ -241,8 +259,8 @@ def Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin):
         elif(math.exp(dif/Tmax)>random.random()):
             best_cost = new_cost
             best_solution = neighbor
-        Tmax=Tmax-5
-    return best_cost
+        Tmax=Tmax*0.98
+    return best_solution,best_cost
 
 def select_random_config(lib,deadline,nlib):
     currday=0
@@ -295,7 +313,60 @@ def get_neighbors_sa(todas_lib,lib_sol,deadline):
             lib_sol.append(rem)
     return lib_sol
     
+def iterated_local_search(libs, scores, dias_total, max_iterations=50,perturbation_levels=3):
+    current_solution = initial_solution(libs, scores)
+    best_solution = current_solution
+    best_score = evaluate_solution(current_solution, scores, dias_total)
+    
+    for i in range(max_iterations):
+        current_solution, current_score = tabu_search(libs, scores, dias_total,5,30)
+        for level in range(1, perturbation_levels + 1):
+            perturbed_solution = perturb_solution(current_solution, level)
+            perturbed_solution, perturbed_score = tabu_search(libs, scores, dias_total, 5, 30)
+            
+            if perturbed_score > best_score:
+                best_solution = perturbed_solution
+                best_score = perturbed_score
+    return best_solution, best_score
 
+def perturb_solution(solution,level):
+    perturbed_solution = solution.copy()
+    num_libs = len(solution)
+    if num_libs >= 2:
+        if level == 1:
+            id1, id2 = random.sample(range(num_libs), 2)
+            perturbed_solution[id1], perturbed_solution[id2] = perturbed_solution[id2], perturbed_solution[id1]
+        elif level == 2:
+            subset_size = num_libs//3
+            indices_to_swap = random.sample(range(num_libs), subset_size)
+            if len(indices_to_swap) % 2 == 0:  
+                for i in range(0, len(indices_to_swap), 2):
+                    id1, id2 = indices_to_swap[i], indices_to_swap[i + 1]
+                    perturbed_solution[id1], perturbed_solution[id2] = perturbed_solution[id2], perturbed_solution[id1]
+        elif level == 3:
+            random.shuffle(perturbed_solution)
+    return perturbed_solution
+
+
+def create_file(res,filename,scores,deadline,op):
+    dict_sol = {}
+    evaluate_solution(res[0],scores,deadline,dict_sol)
+    nm=nome_ficheiro_final(op)
+    out=filename.replace(".txt", nm)
+    with open(out, 'w') as fileout:
+        fileout.write(str(len(res[0])))
+        fileout.write("\n")
+        for lib in res[0]:
+            try:
+                fileout.write(str(lib.id_liv) + " " + str(len(dict_sol.get(lib.id_liv))) + "\n")
+            except TypeError:
+                fileout.write(str(lib.id_liv))
+            try:
+                for book in dict_sol.get(lib.id_liv):
+                    fileout.write(str(book) + " ")
+            except TypeError:
+                fileout.write(" Assigned after deadline is over ")
+            fileout.write("\n")
 
 def main(fileop, op,iterations,tabuSize):
     # Nome do ficheiro
@@ -307,32 +378,32 @@ def main(fileop, op,iterations,tabuSize):
     nlivros, nlib, deadline = map(int, file.readline().split())
     # Array com todas as pontuações dos livros, o livro numero 3 tem pontuação de score[2]
     scores =list(map(int, file.readline().split()))
-   
+    
     # Lista com todas as livrarias, organizadas pela class criada acima
     lib = list()
     for i in range(nlib):
         nl, ts, ld = list(map(int, file.readline().split()))
         idlivros =list( map(int, file.readline().split()))
-        lib.append(Library(nl, ts, ld, idlivros))
-
-    #res=melhor_lib_dr(scores, lib, deadline)
-    #Mete o valor dos livros ja usados a 0
-    #reset_score(res[1],scores,deadline)
-    #print("Max: "+ str(res[0]) + " Signup: " + str(res[1].tempo_signup)+" Scores atualizados"+ str(scores) +"\n")
+        lib.append(Library(i,nl, ts, ld, idlivros))
     # Resultado com base na escolha do utilizador
     if op == 1:
         print(nlivros)
     elif op == 2:
         Tmax=nlib*10
-        Tmin=0
+        Tmin=1
         res = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
-        print("Custo final: " + str(res) + " \n")
-        
-        
+        create_file(res, filename, scores, deadline,op)
+        print("Custo final: " + str(res[1]) + " \n")
     elif op == 3:
         print(deadline)
     elif op == 4:
-        print("Final Score: " + str(tabu_search(lib,scores,deadline,tabuSize,iterations)[1]))
+        res=tabu_search(lib,scores,deadline,tabuSize,iterations)
+        create_file(res, filename, scores, deadline,op)
+        print("Final Score: " + str(res[1]))
+    elif op == 5:
+        res = iterated_local_search(lib, scores, deadline)
+        create_file(res, filename, scores, deadline,op)
+        print("Custo final: " + str(res[1]) + " \n")
     # Fecha o ficheiro
     file.close()
     # Sai do programa (Por enquanto mete-se isto para nao voltar logo ao menu e ser mais facil ler o resultado)
@@ -384,7 +455,7 @@ def total_score_menu(fileop):
         print("|       2- Simulated Annealing           |\n")
         print("|       3- Hill Climbing                 |\n")
         print("|       4- Genetic Algorithm             |\n")
-        print("|       5- Other                         |\n")
+        print("|       5- Iterated Local Search         |\n")
         print("|________________________________________|\n")
         print("|                                        |\n")
         print("|             [B] - Go back              |\n")
@@ -398,6 +469,9 @@ def total_score_menu(fileop):
             tabu_search_menu(fileop)
             break
         if op.isdigit() and 2 == int(op):
+            main(int(fileop),int(op),0,0)
+            break
+        if op.isdigit() and 5 == int(op):
             main(int(fileop),int(op),0,0)
             break
         elif op.lower() == 'e':
