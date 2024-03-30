@@ -434,7 +434,7 @@ def mutate_solution(solution, libraries, mutation_no):
 
 # Perform Genetic algorithm to find the best solution for library scheduling.       
 def genetic_algorithm(deadline, scores, libraries): 
-    print("\n------------------------------------------\n")
+    print("\n------------------------------------------")
     print("Please, insert the population size. (Recommended size is 10)\n")
     population_size = input("Population Size: ")
 
@@ -447,7 +447,7 @@ def genetic_algorithm(deadline, scores, libraries):
     print("\nPlease, insert value for Population Variation. (Recommended value is 0.01)\n")
     population_variation = input("(From 0 to 1) Population Variation: ")
 
-    print("\n------------------------------------------\n")
+    print("\n------------------------------------------")
 
     if population_size.isdigit() and num_generations.isdigit() and mutation_prob.replace('.', '', 1).isdigit() and population_variation.replace('.', '', 1).isdigit():        
         population_size = int(population_size)
@@ -514,7 +514,7 @@ def main(fileop, op,iterations,tabuSize):
     if op == 1:
         final_solution = tabu_search(lib, scores, deadline, tabuSize, iterations)
         create_file(final_solution, filename, scores, deadline, op)
-        print("------------------------------------------\n")
+        print("------------------------------------------")
         print("Solution Score:", final_solution[1])
 
     elif op == 2:
@@ -522,25 +522,25 @@ def main(fileop, op,iterations,tabuSize):
         Tmin=1
         final_solution = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
         create_file(final_solution, filename, scores, deadline,op)
-        print("------------------------------------------\n")
+        print("------------------------------------------")
         print("Solution Score:", str(final_solution[1]))
 
     elif op == 3:
         final_solution = hill_climbing(lib, scores, deadline)
         create_file(final_solution, filename, scores, deadline, op)
-        print("------------------------------------------\n")
+        print("------------------------------------------")
         print("Solution Score:", final_solution[1])
         
     elif op == 4:
         final_solution = genetic_algorithm(deadline, scores, lib)
         create_file(final_solution, filename, scores, deadline, op)
-        print("------------------------------------------\n")
+        print("------------------------------------------")
         print("Solution Score:", final_solution[1])
 
     elif op == 5:
         final_solution = iterated_local_search(lib, scores, deadline)
         create_file(final_solution, filename, scores, deadline, op)
-        print("------------------------------------------\n")
+        print("------------------------------------------")
         print("Solution Score:", str(final_solution[1]))
 
     # Closes the file
@@ -578,23 +578,23 @@ def tabu_search_menu(fileop):
 # Displays a menu for selecting the optimization algorithm to find the total score of the solution.
 def total_score_menu(fileop):
     while True:
-        print("------------------------------------------\n")
-        print("|                                        |\n")
-        print("|        What method do you want         |\n")
-        print("|     to use to find the total score?    |\n")
-        print("|________________________________________|\n")
-        print("|                                        |\n")
-        print("|       1- Tabu Search                   |\n")
-        print("|       2- Simulated Annealing           |\n")
-        print("|       3- Hill Climbing                 |\n")
-        print("|       4- Genetic Algorithm             |\n")
-        print("|       5- Other                         |\n")
-        print("|________________________________________|\n")
-        print("|                                        |\n")
-        print("|             [B] - Go back              |\n")
-        print("|               [E] - Exit               |\n")
-        print("|                                        |\n")
-        print("------------------------------------------\n")
+        print("------------------------------------------")
+        print("|                                        |")
+        print("|        What method do you want         |")
+        print("|     to use to find the total score?    |")
+        print("|________________________________________|")
+        print("|                                        |")
+        print("|       1- Tabu Search                   |")
+        print("|       2- Simulated Annealing           |")
+        print("|       3- Hill Climbing                 |")
+        print("|       4- Genetic Algorithm             |")
+        print("|       5- Other                         |")
+        print("|________________________________________|")
+        print("|                                        |")
+        print("|             [B] - Go back              |")
+        print("|               [E] - Exit               |")
+        print("|                                        |")
+        print("------------------------------------------")
         
         op = input("Option: ")
         
@@ -624,24 +624,24 @@ def total_score_menu(fileop):
 # This function displays the main menu, prompting the user to select a file.
 def menu():
     while True:
-        print("------------------------------------------\n")
-        print("|                                        |\n")
-        print("|   Please select a file from the list   |\n")
-        print("|________________________________________|\n")
-        print("|                                        |\n")
-        print("|    1- (A) Basic Example                |\n")
-        print("|    2- (B) Read On                      |\n")
-        print("|    3- (C) Incunabula                   |\n")
-        print("|    4- (D) Tough Choices                |\n")
-        print("|    5- (E) So Many Books                |\n")
-        print("|    6- (F) Libraries of the World       |\n")
-        print("|________________________________________|\n")
-        print("|                                        |\n")
-        print("|               [E] - Exit               |\n")
-        print("|                                        |\n")
-        print("------------------------------------------\n")
+        print("------------------------------------------")
+        print("|                                        |")
+        print("|   Please select a file from the list   |")
+        print("|________________________________________|")
+        print("|                                        |")
+        print("|    1- (A) Basic Example                |")
+        print("|    2- (B) Read On                      |")
+        print("|    3- (C) Incunabula                   |")
+        print("|    4- (D) Tough Choices                |")
+        print("|    5- (E) So Many Books                |")
+        print("|    6- (F) Libraries of the World       |")
+        print("|________________________________________|")
+        print("|                                        |")
+        print("|               [E] - Exit               |")
+        print("|                                        |")
+        print("------------------------------------------")
         
-        fileop = input("Opção: ")
+        fileop = input("Option: ")
         
         if fileop.isdigit() and 1 <= int(fileop) <= 6:
             total_score_menu(int(fileop))
