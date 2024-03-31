@@ -355,11 +355,14 @@ def hill_climbing(libraries, book_scores, deadline):
 # Selection of Parents for Genetic Algorithm
 def selection(population):
     g1 = random.sample(population, 3)
-    parent1 = sorted(g1, key=lambda x: x[1], reverse=True)[0]
+    parent1 = max(g1, key=lambda x: x[1])
 
-    rest = [x for x in population if x not in g1]
+    rest = population.copy()
+    for p in g1:
+        rest.remove(p)
+
     g2 = random.sample(rest, 3)
-    parent2 = sorted(g2, key=lambda x: x[1], reverse=True)[0]
+    parent2 = max(g2, key=lambda x: x[1])
 
     return parent1, parent2
 
