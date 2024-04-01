@@ -8,6 +8,7 @@ from math import ceil
 
 class Library():
     def __init__(self,id_liv,n_livros,tempo_signup,livros_dia,livros):
+        # Library id
         self.id_liv = id_liv
         # Number of books in the library
         self.n_livros = n_livros
@@ -524,7 +525,7 @@ def main(fileop, op,iterations,tabuSize):
         Tmax=nlib*10
         Tmin=1
         final_solution = Sim_annealing(nlib,lib,scores,deadline,Tmax,Tmin)
-        create_file(final_solution, filename, scores, deadline,op)
+        create_file(final_solution, filename, scores, deadline, op)
         print("------------------------------------------")
         print("Solution Score:", str(final_solution[1]))
 
